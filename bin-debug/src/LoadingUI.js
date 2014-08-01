@@ -46,7 +46,7 @@ var LoadingUI = (function (_super) {
     };
 
     LoadingUI.prototype.setProgress = function (current, total) {
-        this.textField.text = "游戏加载中..." + current + "/" + total;
+        this.textField.text = "Loading..." + current + "/" + total;
     };
     return LoadingUI;
 })(egret.Sprite);
