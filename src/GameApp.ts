@@ -129,8 +129,8 @@ class GameApp extends egret.DisplayObjectContainer{
      * Show logo
      */
     private showLogo():void {
-        egret.Tween.get(this.normalLogo).to({"alpha":1}, 1200).wait(200);
-        egret.Tween.get(this.touchSign).to({"alpha":1}, 1500).call(this.waitingForTouch, this);
+        egret.Tween.get(this.normalLogo).to({"alpha":1}, 1000).wait(100);
+        egret.Tween.get(this.touchSign).to({"alpha":1}, 800).call(this.waitingForTouch, this);
     }
 
     /**
@@ -139,16 +139,18 @@ class GameApp extends egret.DisplayObjectContainer{
      */
     private waitingForTouch():void {
         egret.Tween.removeAllTweens();
-        this.removeChild(this.darkLogo);
         this.addEventListener(egret.TouchEvent.TOUCH_BEGIN, this.onScreenTouched, this);
     }
 
     private onScreenTouched(e:egret.TouchEvent):void {
         this.removeEventListener(egret.TouchEvent.TOUCH_BEGIN, this.onScreenTouched, this);
 
+        this.removeChild(this.darkLogo);
+        this.removeChild(this.normalLogo);
+        this.removeChild(this.touchSign);
+
         var mainGame:MainGame = new MainGame(this.stageW, this.stageH);
         this.addChild(mainGame);
-        mainGame.test();
     }
 
     private centerObject(obj:egret.DisplayObject):void {

@@ -124,8 +124,8 @@ var GameApp = (function (_super) {
     * Show logo
     */
     GameApp.prototype.showLogo = function () {
-        egret.Tween.get(this.normalLogo).to({ "alpha": 1 }, 1200).wait(200);
-        egret.Tween.get(this.touchSign).to({ "alpha": 1 }, 1500).call(this.waitingForTouch, this);
+        egret.Tween.get(this.normalLogo).to({ "alpha": 1 }, 1000).wait(100);
+        egret.Tween.get(this.touchSign).to({ "alpha": 1 }, 800).call(this.waitingForTouch, this);
     };
 
     /**
@@ -134,16 +134,18 @@ var GameApp = (function (_super) {
     */
     GameApp.prototype.waitingForTouch = function () {
         egret.Tween.removeAllTweens();
-        this.removeChild(this.darkLogo);
         this.addEventListener(egret.TouchEvent.TOUCH_BEGIN, this.onScreenTouched, this);
     };
 
     GameApp.prototype.onScreenTouched = function (e) {
         this.removeEventListener(egret.TouchEvent.TOUCH_BEGIN, this.onScreenTouched, this);
 
-        this.mainGame = new MainGame(this.stageW, this.stageH);
-        this.addChild(this.mainGame);
-        this.mainGame.test();
+        this.removeChild(this.darkLogo);
+        this.removeChild(this.normalLogo);
+        this.removeChild(this.touchSign);
+
+        var mainGame = new MainGame(this.stageW, this.stageH);
+        this.addChild(mainGame);
     };
 
     GameApp.prototype.centerObject = function (obj) {
