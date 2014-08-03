@@ -10,6 +10,7 @@ class MainGame extends egret.DisplayObjectContainer {
 
     private player:egret.Bitmap;
     private demoBlock:egret.Bitmap;
+    private instruction:egret.Bitmap;
     private touchAreas:Array<egret.Bitmap>;
     private points:Array<any>;
 
@@ -18,18 +19,22 @@ class MainGame extends egret.DisplayObjectContainer {
     private readyToEngage:boolean = false;
     private isInTutorial:boolean = true;
 
-    // 三角形检测使用函数
-    // For triangle test
-    private sign:Function = function(n:number) {
-        return Math.abs(n)/n;
-    };
-
     // 时钟动画相关
     // Timer animation related
     private timer:egret.Timer;
     private timeGraph:egret.Shape;
     private drawScale:number = 50;
     private drawScaleStep:number;
+
+    // 游戏用数据
+    // Variables for use in the game
+    private rotateSteps:number = 1;
+
+    // 三角形检测使用函数
+    // For triangle test
+    private sign:Function = function(n:number) {
+        return Math.abs(n)/n;
+    };
 
     public constructor(w:number, h:number) {
         super();
@@ -42,6 +47,10 @@ class MainGame extends egret.DisplayObjectContainer {
         this.addEventListener(egret.Event.ADDED_TO_STAGE, this.onAddToStage, this);
     }
 
+    /**
+     * 初始化
+     * Initialize
+     */
     private onAddToStage():void {
         // 设置触摸层
         // Set up touch areas
@@ -97,6 +106,16 @@ class MainGame extends egret.DisplayObjectContainer {
         this.demoBlock.alpha = 0;
         this.addChild(this.demoBlock);
 
+        // 设置说明
+        // Set up instruction
+        this.instruction = new egret.Bitmap;
+        this.instruction.texture = this.sheet.getTexture("instruction");
+        this.instruction.anchorX = this.demoBlock.anchorY = 0.5;
+        this.instruction.x = this.stageW / 2;
+        this.instruction.y = this.boardY + this.stageW - 100;
+        this.instruction.alpha = 0;
+        this.addChild(this.instruction);
+
         egret.Tween.get(this.demoBlock).to({"alpha" : 1, "y" : this.boardY + 50}, 500);
 
         // 计算绘制需要的步长
@@ -118,8 +137,26 @@ class MainGame extends egret.DisplayObjectContainer {
         for (var j=0; j<4; j++) {
             egret.Tween.get(this.touchAreas[j]).wait(j*200).to({"alpha" : 1}, 300).to({"alpha" : 0}, 200);
         }
+
+        egret.Tween.get(this.instruction)
+            .to({"alpha" : 1}, 800).wait(600)
+            .to({"alpha" : 0}, 1000).call(this.startGame, this);
     }
 
+    /**
+     * 开始游戏
+     * Start the game
+     */
+    private startGame():void {
+        this.timer.start();
+        this.readyToEngage = true;
+    }
+
+    /**
+     * 触摸响应
+     * Response to touch event
+     * @param {egret.TouchEvent} e
+     */
     private onAreaTouched(e:egret.TouchEvent):void {
         if (!this.readyToEngage)
             return;
@@ -136,9 +173,14 @@ class MainGame extends egret.DisplayObjectContainer {
 
         if (direction != -1) {
             egret.Tween.get(this.touchAreas[direction]).to({"alpha" : 1}, 200).to({"alpha" : 0}, 100);
+            this.player.rotation = direction * 90;
         }
     }
 
+    /**
+     * 时钟触发事件
+     * Timer update event
+     */
     private timerFunc():void {
         this.drawScale += this.drawScaleStep;
         this.timeGraph.graphics.clear();
@@ -148,9 +190,35 @@ class MainGame extends egret.DisplayObjectContainer {
         if (this.drawScale*2 >= this.stageW) {
             this.timeGraph.graphics.clear();
             this.timer.stop();
+            this.drawScale = 50;
+            this.readyToEngage = false;
+            this.rotatePlayer();
         }
     }
 
+    /**
+     * 玩家运动
+     * Player make a move
+     */
+    private rotatePlayer():void {
+        this.rotateSteps = (this.rotateSteps == 2) ? 1 : 2;
+        var rotation = this.player.rotation + this.rotateSteps * 90;
+        egret.Tween.get(this.player).to({"rotation" : rotation}, 250 * this.rotateSteps).call(this.fireTheLaser, this);
+    }
+
+    /**
+     * 发动攻击
+     * Fire the laser
+     */
+    private fireTheLaser():void {
+        this.readyToEngage = true;
+        this.timer.start();
+    }
+
+    /**
+     * 初始化区域顶点
+     * Initialize area points
+     */
     private initPoints():void {
         this.points = [ ];
         var centerPoint = new Point(this.stageW / 2, this.boardY + this.stageW / 2);
@@ -173,6 +241,15 @@ class MainGame extends egret.DisplayObjectContainer {
         this.points.push(pointCollection);
     }
 
+    /**
+     * 检查测试点是否在三角区域内
+     * Check to see if the test point is in the triangle area
+     * @param {Point} A
+     * @param {Point} B
+     * @param {Point} C
+     * @param {Point} P 测试点 (Test point)
+     * @returns {boolean}   是否在三角区域内 (Is the point in the triangle area?)
+     */
     private isInsideTriangle(A:Point, B:Point, C:Point, P:Point):boolean {
         var planeAB:number = (A.x - P.x) * (B.y - P.y) - (B.x - P.x) * (A.y - P.y);
         var planeBC:number = (B.x - P.x) * (C.y - P.y) - (C.x - P.x) * (B.y - P.y);

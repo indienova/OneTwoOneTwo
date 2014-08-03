@@ -13,12 +13,16 @@ var MainGame = (function (_super) {
         _super.call(this);
         this.sheet = RES.getRes("gameSheet");
         this.readyToEngage = false;
+        this.isInTutorial = true;
+        this.drawScale = 50;
+        // 游戏用数据
+        // Variables for use in the game
+        this.rotateSteps = 1;
         // 三角形检测使用函数
         // For triangle test
         this.sign = function (n) {
             return Math.abs(n) / n;
         };
-        this.drawScale = 50;
 
         // 设置尺寸
         // Set up sizes
@@ -28,6 +32,10 @@ var MainGame = (function (_super) {
 
         this.addEventListener(egret.Event.ADDED_TO_STAGE, this.onAddToStage, this);
     }
+    /**
+    * 初始化
+    * Initialize
+    */
     MainGame.prototype.onAddToStage = function () {
         // 设置触摸层
         // Set up touch areas
@@ -83,6 +91,16 @@ var MainGame = (function (_super) {
         this.demoBlock.alpha = 0;
         this.addChild(this.demoBlock);
 
+        // 设置说明
+        // Set up instruction
+        this.instruction = new egret.Bitmap;
+        this.instruction.texture = this.sheet.getTexture("instruction");
+        this.instruction.anchorX = this.demoBlock.anchorY = 0.5;
+        this.instruction.x = this.stageW / 2;
+        this.instruction.y = this.boardY + this.stageW - 100;
+        this.instruction.alpha = 0;
+        this.addChild(this.instruction);
+
         egret.Tween.get(this.demoBlock).to({ "alpha": 1, "y": this.boardY + 50 }, 500);
 
         // 计算绘制需要的步长
@@ -105,8 +123,24 @@ var MainGame = (function (_super) {
         for (var j = 0; j < 4; j++) {
             egret.Tween.get(this.touchAreas[j]).wait(j * 200).to({ "alpha": 1 }, 300).to({ "alpha": 0 }, 200);
         }
+
+        egret.Tween.get(this.instruction).to({ "alpha": 1 }, 800).wait(600).to({ "alpha": 0 }, 1000).call(this.startGame, this);
     };
 
+    /**
+    * 开始游戏
+    * Start the game
+    */
+    MainGame.prototype.startGame = function () {
+        this.timer.start();
+        this.readyToEngage = true;
+    };
+
+    /**
+    * 触摸响应
+    * Response to touch event
+    * @param {egret.TouchEvent} e
+    */
     MainGame.prototype.onAreaTouched = function (e) {
         if (!this.readyToEngage)
             return;
@@ -123,9 +157,14 @@ var MainGame = (function (_super) {
 
         if (direction != -1) {
             egret.Tween.get(this.touchAreas[direction]).to({ "alpha": 1 }, 200).to({ "alpha": 0 }, 100);
+            this.player.rotation = direction * 90;
         }
     };
 
+    /**
+    * 时钟触发事件
+    * Timer update event
+    */
     MainGame.prototype.timerFunc = function () {
         this.drawScale += this.drawScaleStep;
         this.timeGraph.graphics.clear();
@@ -135,9 +174,35 @@ var MainGame = (function (_super) {
         if (this.drawScale * 2 >= this.stageW) {
             this.timeGraph.graphics.clear();
             this.timer.stop();
+            this.drawScale = 50;
+            this.readyToEngage = false;
+            this.rotatePlayer();
         }
     };
 
+    /**
+    * 玩家运动
+    * Player make a move
+    */
+    MainGame.prototype.rotatePlayer = function () {
+        this.rotateSteps = (this.rotateSteps == 2) ? 1 : 2;
+        var rotation = this.player.rotation + this.rotateSteps * 90;
+        egret.Tween.get(this.player).to({ "rotation": rotation }, 250 * this.rotateSteps).call(this.fireTheLaser, this);
+    };
+
+    /**
+    * 发动攻击
+    * Fire the laser
+    */
+    MainGame.prototype.fireTheLaser = function () {
+        this.readyToEngage = true;
+        this.timer.start();
+    };
+
+    /**
+    * 初始化区域顶点
+    * Initialize area points
+    */
     MainGame.prototype.initPoints = function () {
         this.points = [];
         var centerPoint = new Point(this.stageW / 2, this.boardY + this.stageW / 2);
@@ -168,6 +233,15 @@ var MainGame = (function (_super) {
         this.points.push(pointCollection);
     };
 
+    /**
+    * 检查测试点是否在三角区域内
+    * Check to see if the test point is in the triangle area
+    * @param {Point} A
+    * @param {Point} B
+    * @param {Point} C
+    * @param {Point} P 测试点 (Test point)
+    * @returns {boolean}   是否在三角区域内 (Is the point in the triangle area?)
+    */
     MainGame.prototype.isInsideTriangle = function (A, B, C, P) {
         var planeAB = (A.x - P.x) * (B.y - P.y) - (B.x - P.x) * (A.y - P.y);
         var planeBC = (B.x - P.x) * (C.y - P.y) - (C.x - P.x) * (B.y - P.y);

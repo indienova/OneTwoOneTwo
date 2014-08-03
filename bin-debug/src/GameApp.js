@@ -137,6 +137,11 @@ var GameApp = (function (_super) {
         this.addEventListener(egret.TouchEvent.TOUCH_BEGIN, this.onScreenTouched, this);
     };
 
+    /**
+    * 屏幕触摸事件
+    * Screen touched event
+    * @param {egret.TouchEvent} e
+    */
     GameApp.prototype.onScreenTouched = function (e) {
         this.removeEventListener(egret.TouchEvent.TOUCH_BEGIN, this.onScreenTouched, this);
 
@@ -148,6 +153,11 @@ var GameApp = (function (_super) {
         this.addChild(mainGame);
     };
 
+    /**
+    * 将可视对象居中显示
+    * Make display object to the center of the stage
+    * @param obj
+    */
     GameApp.prototype.centerObject = function (obj) {
         obj.anchorX = obj.anchorY = 0.5;
         obj.x = this.stageW / 2;

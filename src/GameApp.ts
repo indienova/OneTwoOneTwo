@@ -142,6 +142,11 @@ class GameApp extends egret.DisplayObjectContainer{
         this.addEventListener(egret.TouchEvent.TOUCH_BEGIN, this.onScreenTouched, this);
     }
 
+    /**
+     * 屏幕触摸事件
+     * Screen touched event
+     * @param {egret.TouchEvent} e
+     */
     private onScreenTouched(e:egret.TouchEvent):void {
         this.removeEventListener(egret.TouchEvent.TOUCH_BEGIN, this.onScreenTouched, this);
 
@@ -153,6 +158,11 @@ class GameApp extends egret.DisplayObjectContainer{
         this.addChild(mainGame);
     }
 
+    /**
+     * 将可视对象居中显示
+     * Make display object to the center of the stage
+     * @param obj
+     */
     private centerObject(obj:egret.DisplayObject):void {
         obj.anchorX = obj.anchorY = 0.5;
         obj.x = this.stageW / 2;

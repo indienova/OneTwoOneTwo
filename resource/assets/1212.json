@@ -1,45 +1,79 @@
 {"file": "1212.png", "frames": {
     "demoBlock": {
-        "x": 296,
-        "y": 406,
-        "w": 100,
-        "h": 100
-    },
-    "demoBlockDestroyed": {
-        "x": 296,
-        "y": 304,
-        "w": 100,
-        "h": 100
-    },
-    "enemy": {
-        "x": 194,
-        "y": 358,
-        "w": 100,
-        "h": 100
-    },
-    "enemyDestroyed": {
-        "x": 194,
-        "y": 256,
-        "w": 100,
-        "h": 100
-    },
-    "logoDark": {
         "x": 2,
         "y": 154,
-        "w": 190,
-        "h": 256
+        "w": 100,
+        "h": 96,
+        "offX": 0,
+        "offY": 2,
+        "sourceW": 100,
+        "sourceH": 100
+    },
+    "demoBlockDestroyed": {
+        "x": 2,
+        "y": 323,
+        "w": 100,
+        "h": 96,
+        "offX": 0,
+        "offY": 2,
+        "sourceW": 100,
+        "sourceH": 100
+    },
+    "enemy": {
+        "x": 186,
+        "y": 412,
+        "w": 100,
+        "h": 88,
+        "offX": 0,
+        "offY": 6,
+        "sourceW": 100,
+        "sourceH": 100
+    },
+    "enemyDestroyed": {
+        "x": 2,
+        "y": 421,
+        "w": 100,
+        "h": 88,
+        "offX": 0,
+        "offY": 6,
+        "sourceW": 100,
+        "sourceH": 100
+    },
+    "instruction": {
+        "x": 304,
+        "y": 2,
+        "w": 200,
+        "h": 61
+    },
+    "logoDark": {
+        "x": 104,
+        "y": 154,
+        "w": 186,
+        "h": 256,
+        "offX": 1,
+        "offY": 0,
+        "sourceW": 190,
+        "sourceH": 256
     },
     "logoNormal": {
         "x": 304,
-        "y": 2,
-        "w": 190,
-        "h": 256
+        "y": 65,
+        "w": 186,
+        "h": 256,
+        "offX": 1,
+        "offY": 0,
+        "sourceW": 190,
+        "sourceH": 256
     },
     "player": {
-        "x": 194,
-        "y": 154,
-        "w": 100,
-        "h": 100
+        "x": 104,
+        "y": 412,
+        "w": 80,
+        "h": 90,
+        "offX": 10,
+        "offY": 0,
+        "sourceW": 100,
+        "sourceH": 100
     },
     "touchArea": {
         "x": 2,
@@ -48,8 +82,8 @@
         "h": 150
     },
     "touchStart": {
-        "x": 296,
-        "y": 260,
+        "x": 292,
+        "y": 323,
         "w": 170,
         "h": 42
     }

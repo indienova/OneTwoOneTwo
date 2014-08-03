@@ -1,11 +1,12 @@
 {
 "resources":
 	[
-        {"name":"gameSheet","type":"sheet","url":"assets/1212.json"}
+        {"name":"gameSheet","type":"sheet","url":"assets/1212.json"},
+        {"name":"gameSheetPNG","type":"image","url":"assets/1212.png"}
 	],
 
 "groups":
 	[
-        {"name":"preload","keys":"gameSheet"}
+        {"name":"preload","keys":"gameSheet,gameSheetPNG"}
 	]
 }

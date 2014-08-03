@@ -6,8 +6,8 @@ class Point {
     public x:number;
     public y:number;
 
-    public constructor(xNumber:number, yNumber:number) {
-        this.x = xNumber;
-        this.y = yNumber;
+    public constructor(xValue:number, yValue:number) {
+        this.x = xValue;
+        this.y = yValue;
     }
 }
