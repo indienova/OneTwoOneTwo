@@ -30,6 +30,10 @@ class GameApp extends egret.DisplayObjectContainer{
     private stageW:number;
     private stageH:number;
 
+    private darkLogo:egret.Bitmap;
+    private normalLogo:egret.Bitmap;
+    private touchSign:egret.Bitmap;
+
     private loadingView:LoadingUI;
 
     public constructor() {
@@ -42,6 +46,7 @@ class GameApp extends egret.DisplayObjectContainer{
         // Setup loading interface
         this.loadingView  = new LoadingUI();
         this.stage.addChild(this.loadingView);
+        this.touchEnabled = true;
 
         // 取得 Stage 尺寸
         // Get Stage sizes
@@ -53,6 +58,7 @@ class GameApp extends egret.DisplayObjectContainer{
         RES.addEventListener(RES.ResourceEvent.CONFIG_COMPLETE,this.onConfigComplete,this);
         RES.loadConfig("resource/resource.json","resource/");
     }
+
     /**
      * 配置文件加载完成,开始预加载 preload 资源组
      * Configuration loaded, start loading preload resource group
@@ -63,6 +69,7 @@ class GameApp extends egret.DisplayObjectContainer{
         RES.addEventListener(RES.ResourceEvent.GROUP_PROGRESS,this.onResourceProgress,this);
         RES.loadGroup("preload");
     }
+
     /**
      * preload 资源组加载完成
      * preload resource group loaded
@@ -75,6 +82,7 @@ class GameApp extends egret.DisplayObjectContainer{
             this.createGameScene();
         }
     }
+
     /**
      * preload 资源组加载进度
      * preload resource group loading progress
@@ -85,7 +93,6 @@ class GameApp extends egret.DisplayObjectContainer{
         }
     }
 
-    private textContainer:egret.Sprite;
     /**
      * 创建游戏场景
      * Create game scene
@@ -95,27 +102,53 @@ class GameApp extends egret.DisplayObjectContainer{
 
         // 添加 Logo 的两个不同状态（暗底和正常的）
         // Add two status files of logo (dark & normal)
-        var darkLogo:egret.Bitmap = new egret.Bitmap();
-        darkLogo.texture = sheet.getTexture("logoDark");
-        darkLogo.alpha = 0;
-        this.centerObject(darkLogo);
-        this.addChild(darkLogo);
+        this.darkLogo = new egret.Bitmap();
+        this.darkLogo.texture = sheet.getTexture("logoDark");
+        this.darkLogo.alpha = 0;
+        this.centerObject(this.darkLogo);
+        this.addChild(this.darkLogo);
 
-        var normalLogo:egret.Bitmap = new egret.Bitmap();
-        normalLogo.texture = sheet.getTexture("logoNormal");
-        normalLogo.alpha = 0;
-        this.centerObject(normalLogo);
-        this.addChild(normalLogo);
+        this.normalLogo = new egret.Bitmap();
+        this.normalLogo.texture = sheet.getTexture("logoNormal");
+        this.normalLogo.alpha = 0;
+        this.centerObject(this.normalLogo);
+        this.addChild(this.normalLogo);
 
-        // Logo 动画（Fade）
-        // Logo animation (Fade)
-        var twDark = egret.Tween.get(darkLogo);
-        twDark.to({"alpha":1}, 1200);
-        twDark.wait(200);
-        twDark.call(function(){
-            var twNormal = egret.Tween.get(normalLogo);
-            twNormal.to({"alpha":1}, 1500);
-        });
+        this.touchSign = new egret.Bitmap();
+        this.touchSign.texture = sheet.getTexture("touchStart");
+        this.touchSign.alpha = 0;
+        this.centerObject(this.touchSign);
+        this.touchSign.y = this.stageH - 150;
+        this.addChild(this.touchSign);
+
+        egret.Tween.get(this.darkLogo).to({"alpha":1}, 1200).wait(200).call(this.showLogo, this);
+    }
+
+    /**
+     * 显示 logo
+     * Show logo
+     */
+    private showLogo():void {
+        egret.Tween.get(this.normalLogo).to({"alpha":1}, 1200).wait(200);
+        egret.Tween.get(this.touchSign).to({"alpha":1}, 1500).call(this.waitingForTouch, this);
+    }
+
+    /**
+     * 触摸事件处理
+     * Handle touch event
+     */
+    private waitingForTouch():void {
+        egret.Tween.removeAllTweens();
+        this.removeChild(this.darkLogo);
+        this.addEventListener(egret.TouchEvent.TOUCH_BEGIN, this.onScreenTouched, this);
+    }
+
+    private onScreenTouched(e:egret.TouchEvent):void {
+        this.removeEventListener(egret.TouchEvent.TOUCH_BEGIN, this.onScreenTouched, this);
+
+        var mainGame:MainGame = new MainGame(this.stageW, this.stageH);
+        this.addChild(mainGame);
+        mainGame.test();
     }
 
     private centerObject(obj:egret.DisplayObject):void {
@@ -123,6 +156,7 @@ class GameApp extends egret.DisplayObjectContainer{
         obj.x = this.stageW / 2;
         obj.y = this.stageH / 2;
     }
+
     /**
      * 根据 name 关键字创建一个 Bitmap 对象。name 属性请参考 resources/resource.json 配置文件的内容
      * Create a Bitmap object according to the keyword 'name'.

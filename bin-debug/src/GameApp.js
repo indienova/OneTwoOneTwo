@@ -37,21 +37,26 @@ var GameApp = (function (_super) {
         this.addEventListener(egret.Event.ADDED_TO_STAGE, this.onAddToStage, this);
     }
     GameApp.prototype.onAddToStage = function (event) {
-        //设置加载进度界面
+        // 设置加载进度界面
+        // Setup loading interface
         this.loadingView = new LoadingUI();
         this.stage.addChild(this.loadingView);
+        this.touchEnabled = true;
 
         // 取得 Stage 尺寸
+        // Get Stage sizes
         this.stageW = this.stage.stageWidth;
         this.stageH = this.stage.stageHeight;
 
-        //初始化Resource资源加载库
+        // 初始化 Resource 资源加载库
+        // Initialize Resource library
         RES.addEventListener(RES.ResourceEvent.CONFIG_COMPLETE, this.onConfigComplete, this);
         RES.loadConfig("resource/resource.json", "resource/");
     };
 
     /**
-    * 配置文件加载完成,开始预加载preload资源组。
+    * 配置文件加载完成,开始预加载 preload 资源组
+    * Configuration loaded, start loading preload resource group
     */
     GameApp.prototype.onConfigComplete = function (event) {
         RES.removeEventListener(RES.ResourceEvent.CONFIG_COMPLETE, this.onConfigComplete, this);
@@ -61,7 +66,8 @@ var GameApp = (function (_super) {
     };
 
     /**
-    * preload资源组加载完成
+    * preload 资源组加载完成
+    * preload resource group loaded
     */
     GameApp.prototype.onResourceLoadComplete = function (event) {
         if (event.groupName == "preload") {
@@ -73,7 +79,8 @@ var GameApp = (function (_super) {
     };
 
     /**
-    * preload资源组加载进度
+    * preload 资源组加载进度
+    * preload resource group loading progress
     */
     GameApp.prototype.onResourceProgress = function (event) {
         if (event.groupName == "preload") {
@@ -83,30 +90,60 @@ var GameApp = (function (_super) {
 
     /**
     * 创建游戏场景
+    * Create game scene
     */
     GameApp.prototype.createGameScene = function () {
         var sheet = RES.getRes("gameSheet");
 
-        var darkLogo = new egret.Bitmap();
-        darkLogo.texture = sheet.getTexture("logoDark");
-        darkLogo.alpha = 0;
-        this.centerObject(darkLogo);
-        this.addChild(darkLogo);
+        // 添加 Logo 的两个不同状态（暗底和正常的）
+        // Add two status files of logo (dark & normal)
+        this.darkLogo = new egret.Bitmap();
+        this.darkLogo.texture = sheet.getTexture("logoDark");
+        this.darkLogo.alpha = 0;
+        this.centerObject(this.darkLogo);
+        this.addChild(this.darkLogo);
 
-        var normalLogo = new egret.Bitmap();
-        normalLogo.texture = sheet.getTexture("logoNormal");
-        normalLogo.alpha = 0;
-        this.centerObject(normalLogo);
-        this.addChild(normalLogo);
+        this.normalLogo = new egret.Bitmap();
+        this.normalLogo.texture = sheet.getTexture("logoNormal");
+        this.normalLogo.alpha = 0;
+        this.centerObject(this.normalLogo);
+        this.addChild(this.normalLogo);
 
-        // Logo 动画
-        var twDark = egret.Tween.get(darkLogo);
-        twDark.to({ "alpha": 1 }, 1200);
-        twDark.wait(200);
-        twDark.call(function () {
-            var twNormal = egret.Tween.get(normalLogo);
-            twNormal.to({ "alpha": 1 }, 1500);
-        });
+        this.touchSign = new egret.Bitmap();
+        this.touchSign.texture = sheet.getTexture("touchStart");
+        this.touchSign.alpha = 0;
+        this.centerObject(this.touchSign);
+        this.touchSign.y = this.stageH - 150;
+        this.addChild(this.touchSign);
+
+        egret.Tween.get(this.darkLogo).to({ "alpha": 1 }, 1200).wait(200).call(this.showLogo, this);
+    };
+
+    /**
+    * 显示 logo
+    * Show logo
+    */
+    GameApp.prototype.showLogo = function () {
+        egret.Tween.get(this.normalLogo).to({ "alpha": 1 }, 1200).wait(200);
+        egret.Tween.get(this.touchSign).to({ "alpha": 1 }, 1500).call(this.waitingForTouch, this);
+    };
+
+    /**
+    * 触摸事件处理
+    * Handle touch event
+    */
+    GameApp.prototype.waitingForTouch = function () {
+        egret.Tween.removeAllTweens();
+        this.removeChild(this.darkLogo);
+        this.addEventListener(egret.TouchEvent.TOUCH_BEGIN, this.onScreenTouched, this);
+    };
+
+    GameApp.prototype.onScreenTouched = function (e) {
+        this.removeEventListener(egret.TouchEvent.TOUCH_BEGIN, this.onScreenTouched, this);
+
+        this.mainGame = new MainGame(this.stageW, this.stageH);
+        this.addChild(this.mainGame);
+        this.mainGame.test();
     };
 
     GameApp.prototype.centerObject = function (obj) {
@@ -116,7 +153,9 @@ var GameApp = (function (_super) {
     };
 
     /**
-    * 根据name关键字创建一个Bitmap对象。name属性请参考resources/resource.json配置文件的内容。
+    * 根据 name 关键字创建一个 Bitmap 对象。name 属性请参考 resources/resource.json 配置文件的内容
+    * Create a Bitmap object according to the keyword 'name'.
+    * The name property is defined in configuration file: resources/resource.json
     */
     GameApp.prototype.createBitmapByName = function (name) {
         var result = new egret.Bitmap();

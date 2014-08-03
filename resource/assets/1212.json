@@ -1,1 +1,1 @@
-{"file":"1212.png","frames":{"logoDark":{"x":190,"y":2,"w":186,"h":256,"offX":1,"offY":0,"sourceW":190,"sourceH":256},"logoNormal":{"x":2,"y":2,"w":186,"h":256,"offX":1,"offY":0,"sourceW":190,"sourceH":256}}}
+{"file":"1212.png","frames":{"demoBlock":{"x":386,"y":206,"w":100,"h":100},"enemy":{"x":386,"y":104,"w":100,"h":100},"logoDark":{"x":194,"y":2,"w":190,"h":256},"logoNormal":{"x":2,"y":2,"w":190,"h":256},"player":{"x":386,"y":2,"w":100,"h":100},"touchStart":{"x":2,"y":308,"w":170,"h":42}}}
