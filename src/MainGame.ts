@@ -29,6 +29,7 @@ class MainGame extends egret.DisplayObjectContainer {
     // 游戏用数据
     // Variables for use in the game
     private rotateSteps:number = 1;
+    private centerPoint:Point;
 
     // 三角形检测使用函数
     // For triangle test
@@ -43,6 +44,7 @@ class MainGame extends egret.DisplayObjectContainer {
         this.stageW = this.size = w;
         this.stageH = h;
         this.boardY = (this.stageH - this.stageW) / 2;
+        this.centerPoint = new Point(this.stageW / 2, this.boardY + this.stageW / 2);
 
         this.addEventListener(egret.Event.ADDED_TO_STAGE, this.onAddToStage, this);
     }
@@ -153,8 +155,8 @@ class MainGame extends egret.DisplayObjectContainer {
     }
 
     /**
-     * 触摸响应
-     * Response to touch event
+     * 触摸响应，决定方向
+     * Response to touch event, determin shoot direction
      * @param {egret.TouchEvent} e
      */
     private onAreaTouched(e:egret.TouchEvent):void {
@@ -203,7 +205,8 @@ class MainGame extends egret.DisplayObjectContainer {
     private rotatePlayer():void {
         this.rotateSteps = (this.rotateSteps == 2) ? 1 : 2;
         var rotation = this.player.rotation + this.rotateSteps * 90;
-        egret.Tween.get(this.player).to({"rotation" : rotation}, 250 * this.rotateSteps).call(this.fireTheLaser, this);
+        egret.Tween.get(this.player).to({"rotation" : rotation}, 250 * this.rotateSteps)
+            .wait(300).call(this.fireTheLaser, this);
     }
 
     /**
@@ -211,8 +214,35 @@ class MainGame extends egret.DisplayObjectContainer {
      * Fire the laser
      */
     private fireTheLaser():void {
-        this.readyToEngage = true;
-        this.timer.start();
+        var endPoint:Point;
+
+        this.player.rotation %= 360;
+        switch (this.player.rotation) {
+            case 0:
+                endPoint = new Point(this.centerPoint.x, this.boardY);
+                break;
+            case 90:
+                endPoint = new Point(this.stageW, this.centerPoint.y);
+                break;
+            case 180:
+                endPoint = new Point(this.centerPoint.x, this.centerPoint.y + this.stageW / 2);
+                break;
+            case 270:
+                endPoint = new Point(0, this.centerPoint.y);
+                break;
+        }
+
+        var shp:egret.Shape = new egret.Shape();
+        shp.graphics.lineStyle(1, 0x555555);
+        shp.graphics.moveTo(this.centerPoint.x, this.centerPoint.y);
+        shp.graphics.lineTo(endPoint.x, endPoint.y);
+        this.addChild(shp);
+
+        setTimeout(()=>{
+            this.removeChild(shp);
+            this.readyToEngage = true;
+            this.timer.start();
+        }, 1000);
     }
 
     /**
@@ -221,23 +251,22 @@ class MainGame extends egret.DisplayObjectContainer {
      */
     private initPoints():void {
         this.points = [ ];
-        var centerPoint = new Point(this.stageW / 2, this.boardY + this.stageW / 2);
         var pointTL = new Point(0, this.boardY);
         var pointTR = new Point(this.stageW, this.boardY);
         var pointBR = new Point(this.stageW, this.boardY + this.stageW);
         var pointBL = new Point(0, this.boardY + this.stageW);
         var pointCollection;
         pointCollection = [ ];
-        pointCollection.push(centerPoint);  pointCollection.push(pointTL);  pointCollection.push(pointTR);
+        pointCollection.push(this.centerPoint);  pointCollection.push(pointTL);  pointCollection.push(pointTR);
         this.points.push(pointCollection);
         pointCollection = [ ];
-        pointCollection.push(centerPoint);  pointCollection.push(pointTR);  pointCollection.push(pointBR);
+        pointCollection.push(this.centerPoint);  pointCollection.push(pointTR);  pointCollection.push(pointBR);
         this.points.push(pointCollection);
         pointCollection = [ ];
-        pointCollection.push(centerPoint);  pointCollection.push(pointBL);  pointCollection.push(pointBR);
+        pointCollection.push(this.centerPoint);  pointCollection.push(pointBL);  pointCollection.push(pointBR);
         this.points.push(pointCollection);
         pointCollection = [ ];
-        pointCollection.push(centerPoint);  pointCollection.push(pointTL);  pointCollection.push(pointBL);
+        pointCollection.push(this.centerPoint);  pointCollection.push(pointTL);  pointCollection.push(pointBL);
         this.points.push(pointCollection);
     }
 
