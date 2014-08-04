@@ -1,6 +1,10 @@
 /**
  * Created by motionwalk on 14-8-2.
  */
+
+/**
+ * Class MainGame
+ */
 class MainGame extends egret.DisplayObjectContainer {
 
     private stageW:number;
@@ -286,4 +290,18 @@ class MainGame extends egret.DisplayObjectContainer {
         return ((this.sign(planeAB) == this.sign(planeBC)) && (this.sign(planeBC) == this.sign(planeCA)));
     }
 
+}
+
+/**
+ * Class Point
+ */
+class Point {
+
+    public x:number;
+    public y:number;
+
+    public constructor(xValue:number, yValue:number) {
+        this.x = xValue;
+        this.y = yValue;
+    }
 }

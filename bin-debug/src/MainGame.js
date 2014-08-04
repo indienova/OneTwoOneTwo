@@ -1,3 +1,6 @@
+/**
+* Created by motionwalk on 14-8-2.
+*/
 var __extends = this.__extends || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
     function __() { this.constructor = d; }
@@ -5,7 +8,7 @@ var __extends = this.__extends || function (d, b) {
     d.prototype = new __();
 };
 /**
-* Created by motionwalk on 14-8-2.
+* Class MainGame
 */
 var MainGame = (function (_super) {
     __extends(MainGame, _super);
@@ -278,3 +281,14 @@ var MainGame = (function (_super) {
     };
     return MainGame;
 })(egret.DisplayObjectContainer);
+
+/**
+* Class Point
+*/
+var Point = (function () {
+    function Point(xValue, yValue) {
+        this.x = xValue;
+        this.y = yValue;
+    }
+    return Point;
+})();
