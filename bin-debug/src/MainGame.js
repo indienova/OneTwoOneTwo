@@ -22,6 +22,7 @@ var MainGame = (function (_super) {
         */
         this.readyToEngage = false;
         this.drawScale = 50;
+        this.score = 0;
         // 游戏用数据
         // Variables for use in the game
         /**
@@ -122,9 +123,17 @@ var MainGame = (function (_super) {
         this.touchSign.y = this.stageH - 150;
         this.addChild(this.touchSign);
 
+        // 设置得分数字
+        // Set up score label
+        this.labelScore = new egret.TextField();
+        this.labelScore.size = 30;
+        this.labelScore.x = 10;
+        this.labelScore.y = this.boardY - 50;
+        this.addChild(this.labelScore);
+
         // 计算绘制需要的步长
         // Calculate draw step
-        this.drawScaleStep = Math.ceil((this.stageW - this.drawScale) / 100);
+        this.drawScaleStep = Math.ceil((this.stageW - this.drawScale) / 60);
 
         // 创建一个计时器对象
         // Create a Timer object
@@ -149,6 +158,8 @@ var MainGame = (function (_super) {
     MainGame.prototype.setUpGame = function () {
         var _this = this;
         this.isInTutorial = true;
+        this.score = 0;
+        this.updateScore();
         this.setupEnemies();
 
         // 设置演示方块
@@ -190,8 +201,8 @@ var MainGame = (function (_super) {
     * Start the game
     */
     MainGame.prototype.startGame = function () {
-        this.timer.start();
         this.readyToEngage = true;
+        this.timer.start();
     };
 
     /**
@@ -284,6 +295,8 @@ var MainGame = (function (_super) {
             if (this.player.rotation == 0) {
                 this.demoBlock.texture = this.sheet.getTexture("demoBlockDestroyed");
                 egret.Tween.get(this.demoBlock).to({ "alpha": 0 }, 300).call(this.endTutorial, this);
+                this.score++;
+                this.updateScore();
                 setTimeout(function () {
                     _this.removeChild(shp);
                 }, 1000);
@@ -301,6 +314,8 @@ var MainGame = (function (_super) {
             var direction = (this.player.rotation % 360) / 90;
             if (direction == this.targetDirection) {
                 this.enemies[direction].texture = this.sheet.getTexture("enemyDestroyed");
+                this.score++;
+                this.updateScore();
                 for (var i = 0; i < 4; i++) {
                     if (i != 0)
                         egret.Tween.get(this.enemies[i]).to({ "alpha": 0 }, 500);
@@ -332,6 +347,10 @@ var MainGame = (function (_super) {
             else
                 egret.Tween.get(this.enemies[i]).to({ "alpha": 1 }, 500).call(this.startGame, this);
         }
+    };
+
+    MainGame.prototype.updateScore = function () {
+        this.labelScore.text = 'Score: ' + this.score;
     };
 
     /**
