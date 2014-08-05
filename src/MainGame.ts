@@ -15,7 +15,9 @@ class MainGame extends egret.DisplayObjectContainer {
     private player:egret.Bitmap;
     private demoBlock:egret.Bitmap;
     private instruction:egret.Bitmap;
+    private mainInstruction:egret.Bitmap;
     private touchSign:egret.Bitmap;
+    private bullet:egret.Bitmap;
     private labelScore:egret.TextField;
     private touchAreas:Array<egret.Bitmap>;
     private enemies:Array<egret.Bitmap>;
@@ -133,9 +135,18 @@ class MainGame extends egret.DisplayObjectContainer {
         this.player = new egret.Bitmap();
         this.player.texture = this.sheet.getTexture("player");
         this.player.anchorX = this.player.anchorY = 0.5;
-        this.player.x = this.stageW / 2;
-        this.player.y = this.boardY + this.stageW / 2;
+        this.player.x = this.centerPoint.x;
+        this.player.y = this.centerPoint.y;
         this.addChild(this.player);
+
+        // 设置子弹
+        // Set up bullet
+        this.bullet = new egret.Bitmap();
+        this.bullet.texture = this.sheet.getTexture("bullet");
+        this.bullet.anchorX = this.bullet.anchorY = 0.5;
+        this.bullet.x = this.centerPoint.x;
+        this.bullet.y = this.centerPoint.y;
+        this.addChild(this.bullet);
 
         // 设置重玩按钮
         // Set up replay button
@@ -144,14 +155,25 @@ class MainGame extends egret.DisplayObjectContainer {
         this.touchSign.anchorX = this.touchSign.anchorY = 0.5;
         this.touchSign.alpha = 0;
         this.touchSign.x = this.centerPoint.x;
-        this.touchSign.y = this.stageH - 150;
+        this.touchSign.y = this.stageH - 120;
         this.addChild(this.touchSign);
+
+        // 设置主介绍
+        // Set up main instruction
+        this.mainInstruction = new egret.Bitmap();
+        this.mainInstruction.texture = this.sheet.getTexture("mainInstruction");
+        this.mainInstruction.anchorX = this.mainInstruction.anchorY = 0.5;
+        this.mainInstruction.x = this.centerPoint.x;
+        this.mainInstruction.y = this.centerPoint.y;
+        this.mainInstruction.alpha = 0;
+        this.mainInstruction.visible = false;
+        this.addChild(this.mainInstruction);
 
         // 设置得分数字
         // Set up score label
         this.labelScore = new egret.TextField();
         this.labelScore.size = 30;
-        this.labelScore.x = 10;
+        this.labelScore.x = 2;
         this.labelScore.y = this.boardY - 50;
         this.addChild(this.labelScore);
 
@@ -183,6 +205,27 @@ class MainGame extends egret.DisplayObjectContainer {
         this.score = 0;
         this.updateScore();
         this.setupEnemies();
+
+        this.player.visible = false;
+        this.bullet.visible = false;
+        this.mainInstruction.visible = true;
+        this.mainInstruction.touchEnabled = true;
+        egret.Tween.get(this.mainInstruction)
+            .to({"alpha" : 1, "y" : this.mainInstruction.y - 10}, 300)
+            .call(()=>{
+                this.mainInstruction.addEventListener(egret.TouchEvent.TOUCH_END, this.onDismissMainInstruction, this);
+            });
+    }
+
+    /**
+     * 准备开始游戏
+     * Ready to start game
+     */
+    private prepareGame():void {
+        this.player.visible = true;
+        this.bullet.visible = true;
+        this.mainInstruction.visible = false;
+        this.mainInstruction.touchEnabled = false;
 
         // 设置演示方块
         // Set up demo block
@@ -308,34 +351,31 @@ class MainGame extends egret.DisplayObjectContainer {
                 break;
         }
 
-        var shp:egret.Shape = new egret.Shape();
-        shp.graphics.lineStyle(1, 0x555555);
-        shp.graphics.moveTo(this.centerPoint.x, this.centerPoint.y);
-        shp.graphics.lineTo(endPoint.x, endPoint.y);
-        this.addChild(shp);
+        egret.Tween.get(this.bullet)
+            .to({ "x": endPoint.x, "y": endPoint.y}, 250)
+            .call(this.checkHit, this);
+    }
 
+    private checkHit():void{
         // 检查是否击中
         // Check if we hit the target
+        this.bullet.alpha = 0;
+        this.bullet.x = this.centerPoint.x;
+        this.bullet.y = this.centerPoint.y;
+        egret.Tween.get(this.bullet).to({ "alpha" : 1}, 200);
         if (this.isInTutorial) {    // In tutorial?
             if (this.player.rotation == 0) {
                 this.demoBlock.texture = this.sheet.getTexture("demoBlockDestroyed");
-                egret.Tween.get(this.demoBlock).to({ "alpha" : 0 }, 300).call(this.endTutorial, this);
                 this.score++;
                 this.updateScore();
-                setTimeout(()=>{
-                    this.removeChild(shp);
-                }, 1000);
+                egret.Tween.get(this.demoBlock).to({ "alpha" : 0 }, 300).wait(800).call(this.endTutorial, this);
             } else {
                 setTimeout(()=>{
-                    this.removeChild(shp);
                     this.readyToEngage = true;
                     this.timer.start();
-                }, 1000);
+                }, 800);
             }
         } else {    // Not in tutorial
-            setTimeout(()=>{
-                this.removeChild(shp);
-            }, 1000);
             var direction = (this.player.rotation % 360) / 90;
             if (direction == this.targetDirection) {
                 this.enemies[direction].texture = this.sheet.getTexture("enemyDestroyed");
@@ -353,7 +393,9 @@ class MainGame extends egret.DisplayObjectContainer {
                 }
             } else {
                 // GAME OVER
-                this.gameOver();
+                setTimeout(()=>{
+                    this.gameOver();
+                }, 800);
             }
         }
     }
@@ -408,6 +450,13 @@ class MainGame extends egret.DisplayObjectContainer {
             else
                 egret.Tween.get(this.enemies[i]).to({ "alpha" : 0 }, 500).call(this.setUpGame, this);
         }
+    }
+
+    private onDismissMainInstruction(e:egret.TouchEvent):void {
+        this.mainInstruction.removeEventListener(egret.TouchEvent.TOUCH_END, this.onDismissMainInstruction, this);
+        egret.Tween.get(this.mainInstruction)
+            .to({ "alpha" : 0, "y" : this.centerPoint.y }, 300)
+            .call(this.prepareGame, this);
     }
 
     /**

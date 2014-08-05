@@ -94,17 +94,18 @@ var GameApp = (function (_super) {
     */
     GameApp.prototype.createGameScene = function () {
         var sheet = RES.getRes("gameSheet");
+        var logoSheet = RES.getRes("logoSheet");
 
         // 添加 Logo 的两个不同状态（暗底和正常的）
         // Add two status files of logo (dark & normal)
         this.darkLogo = new egret.Bitmap();
-        this.darkLogo.texture = sheet.getTexture("logoDark");
+        this.darkLogo.texture = logoSheet.getTexture("logoDark");
         this.darkLogo.alpha = 0;
         this.centerObject(this.darkLogo);
         this.addChild(this.darkLogo);
 
         this.normalLogo = new egret.Bitmap();
-        this.normalLogo.texture = sheet.getTexture("logoNormal");
+        this.normalLogo.texture = logoSheet.getTexture("logoNormal");
         this.normalLogo.alpha = 0;
         this.centerObject(this.normalLogo);
         this.addChild(this.normalLogo);

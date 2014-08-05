@@ -2,11 +2,13 @@
 "resources":
 	[
         {"name":"gameSheet","type":"sheet","url":"assets/1212.json"},
-        {"name":"gameSheetPNG","type":"image","url":"assets/1212.png"}
+        {"name":"gameSheetPNG","type":"image","url":"assets/1212.png"},
+        {"name":"logoSheet","type":"sheet","url":"assets/1212Logo.json"},
+        {"name":"logoSheetPNG","type":"image","url":"assets/1212Logo.png"}
 	],
 
 "groups":
 	[
-        {"name":"preload","keys":"gameSheet,gameSheetPNG"}
+        {"name":"preload","keys":"gameSheet,gameSheetPNG,logoSheet,logoSheetPNG"}
 	]
 }

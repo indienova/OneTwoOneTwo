@@ -1,0 +1,22 @@
+{"file": "1212Logo.png", "frames": {
+    "logoDark": {
+        "x": 188,
+        "y": 0,
+        "w": 186,
+        "h": 256,
+        "offX": 1,
+        "offY": 0,
+        "sourceW": 190,
+        "sourceH": 256
+    },
+    "logoNormal": {
+        "x": 0,
+        "y": 0,
+        "w": 186,
+        "h": 256,
+        "offX": 1,
+        "offY": 0,
+        "sourceW": 190,
+        "sourceH": 256
+    }
+}}
