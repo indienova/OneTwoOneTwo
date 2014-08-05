@@ -15,13 +15,25 @@ class MainGame extends egret.DisplayObjectContainer {
     private player:egret.Bitmap;
     private demoBlock:egret.Bitmap;
     private instruction:egret.Bitmap;
+    private touchSign:egret.Bitmap;
     private touchAreas:Array<egret.Bitmap>;
+    private enemies:Array<egret.Bitmap>;
     private points:Array<any>;
 
     private sheet:egret.SpriteSheet = RES.getRes("gameSheet");
 
+    /**
+     * 是否可以交互
+     * Is ready to make interaction?
+     * @type {boolean}
+     */
     private readyToEngage:boolean = false;
-    private isInTutorial:boolean = true;
+    /**
+     * 是否在教学阶段
+     * Is in tutorial phase?
+     * @type {boolean}
+     */
+    private isInTutorial:boolean;
 
     // 时钟动画相关
     // Timer animation related
@@ -32,8 +44,14 @@ class MainGame extends egret.DisplayObjectContainer {
 
     // 游戏用数据
     // Variables for use in the game
+    /**
+     * 玩家旋转步数，在 1 - 2 之间切换
+     * Player rotation steps, switch between 1 and 2 steps
+     * @type {number}
+     */
     private rotateSteps:number = 1;
     private centerPoint:Point;
+    private targetDirection:number = -1;
 
     // 三角形检测使用函数
     // For triangle test
@@ -58,10 +76,11 @@ class MainGame extends egret.DisplayObjectContainer {
      * Initialize
      */
     private onAddToStage():void {
+        var i:number;
         // 设置触摸层
         // Set up touch areas
         this.touchAreas = [ ];
-        for (var i=0; i<4; i++) {
+        for (i=0; i<4; i++) {
             var touchArea:egret.Bitmap = new egret.Bitmap();
             touchArea.texture = this.sheet.getTexture("touchArea");
             touchArea.anchorX = 0.5;
@@ -93,6 +112,20 @@ class MainGame extends egret.DisplayObjectContainer {
         this.timeGraph.y = this.boardY + this.stageW / 2;
         this.addChild(this.timeGraph);
 
+        // 设置敌人
+        // Set up enemies
+        this.enemies = [ ];
+        for(i=0; i<4; i++) {
+            var enemy:egret.Bitmap = new egret.Bitmap();
+            enemy.texture = this.sheet.getTexture("enemy");
+            enemy.anchorX = enemy.anchorY = 0.5;
+            var p = this.getEnenmyResetPosition(i);
+            enemy.x = p.x;  enemy.y = p.y;
+            enemy.alpha = 0;
+            this.enemies.push(enemy);
+            this.addChild(this.enemies[i]);
+        }
+
         // 设置玩家
         // Set up player
         this.player = new egret.Bitmap();
@@ -101,6 +134,43 @@ class MainGame extends egret.DisplayObjectContainer {
         this.player.x = this.stageW / 2;
         this.player.y = this.boardY + this.stageW / 2;
         this.addChild(this.player);
+
+        // 设置重玩按钮
+        // Set up replay button
+        this.touchSign = new egret.Bitmap();
+        this.touchSign.texture = this.sheet.getTexture("touchStart");
+        this.touchSign.anchorX = this.touchSign.anchorY = 0.5;
+        this.touchSign.alpha = 0;
+        this.touchSign.x = this.centerPoint.x;
+        this.touchSign.y = this.stageH - 150;
+        this.addChild(this.touchSign);
+
+        // 计算绘制需要的步长
+        // Calculate draw step
+        this.drawScaleStep = Math.ceil((this.stageW - this.drawScale) / 100);
+
+        // 创建一个计时器对象
+        // Create a Timer object
+        this.timer = new egret.Timer(20);
+        // 注册事件侦听器
+        // Register Timer event listener
+        this.timer.addEventListener(egret.TimerEvent.TIMER, this.timerFunc, this);
+
+        // 初始化触摸监听
+        // Initialize touch listener
+        this.touchEnabled = true;
+        this.addEventListener(egret.TouchEvent.TOUCH_END, this.onAreaTouched, this);
+
+        this.setUpGame();
+    }
+
+    /**
+     * 设置游戏
+     * Set up game
+     */
+    private setUpGame():void {
+        this.isInTutorial = true;
+        this.setupEnemies();
 
         // 设置演示方块
         // Set up demo block
@@ -124,29 +194,18 @@ class MainGame extends egret.DisplayObjectContainer {
 
         egret.Tween.get(this.demoBlock).to({"alpha" : 1, "y" : this.boardY + 50}, 500);
 
-        // 计算绘制需要的步长
-        // Calculate draw step
-        this.drawScaleStep = Math.ceil((this.stageW - this.drawScale) / 100);
-
-        // 创建一个计时器对象
-        // Create a Timer object
-        this.timer = new egret.Timer(20);
-        // 注册事件侦听器
-        // Register Timer event listener
-        this.timer.addEventListener(egret.TimerEvent.TIMER, this.timerFunc, this);
-
-        // 初始化触摸监听
-        // Initialize touch listener
-        this.touchEnabled = true;
-        this.addEventListener(egret.TouchEvent.TOUCH_END, this.onAreaTouched, this);
-
         for (var j=0; j<4; j++) {
             egret.Tween.get(this.touchAreas[j]).wait(j*200).to({"alpha" : 1}, 300).to({"alpha" : 0}, 200);
         }
 
+        // 隐掉说明，开始游戏
+        // Hide the instruction and start the game
         egret.Tween.get(this.instruction)
             .to({"alpha" : 1}, 800).wait(600)
-            .to({"alpha" : 0}, 1000).call(this.startGame, this);
+            .to({"alpha" : 0}, 1000).call(()=>{
+                this.removeChild(this.instruction);
+                this.startGame();
+            });
     }
 
     /**
@@ -209,7 +268,8 @@ class MainGame extends egret.DisplayObjectContainer {
     private rotatePlayer():void {
         this.rotateSteps = (this.rotateSteps == 2) ? 1 : 2;
         var rotation = this.player.rotation + this.rotateSteps * 90;
-        egret.Tween.get(this.player).to({"rotation" : rotation}, 250 * this.rotateSteps)
+        egret.Tween.get(this.player)
+            .to({"rotation" : rotation}, 250 * this.rotateSteps)
             .wait(300).call(this.fireTheLaser, this);
     }
 
@@ -244,13 +304,13 @@ class MainGame extends egret.DisplayObjectContainer {
 
         // 检查是否击中
         // Check if we hit the target
-        var passed:boolean = false;
-        if (this.isInTutorial) {
+        if (this.isInTutorial) {    // In tutorial?
             if (this.player.rotation == 0) {
                 this.demoBlock.texture = this.sheet.getTexture("demoBlockDestroyed");
                 egret.Tween.get(this.demoBlock).to({ "alpha" : 0 }, 300).call(this.endTutorial, this);
-                passed = true;
-                setTimeout(()=>{    this.removeChild(shp);  }, 1000);
+                setTimeout(()=>{
+                    this.removeChild(shp);
+                }, 1000);
             } else {
                 setTimeout(()=>{
                     this.removeChild(shp);
@@ -258,6 +318,44 @@ class MainGame extends egret.DisplayObjectContainer {
                     this.timer.start();
                 }, 1000);
             }
+        } else {    // Not in tutorial
+            setTimeout(()=>{
+                this.removeChild(shp);
+            }, 1000);
+            var direction = (this.player.rotation % 360) / 90;
+            if (direction == this.targetDirection) {
+                this.enemies[direction].texture = this.sheet.getTexture("enemyDestroyed");
+                for (var i=0; i<4; i++) {
+                    if (i != 0)
+                        egret.Tween.get(this.enemies[i]).to({ "alpha" : 0 }, 500);
+                    else
+                        egret.Tween.get(this.enemies[i]).to({ "alpha" : 0 }, 500)
+                            .call(()=>{
+                                this.setupEnemies();
+                                this.toNextRound();
+                            });
+                }
+            } else {
+                // GAME OVER
+                this.gameOver();
+            }
+        }
+    }
+
+    /**
+     * 执行下一局
+     * Start net round
+     */
+    private toNextRound():void {
+        // 处理敌人显示
+        this.targetDirection = Math.floor(Math.random() * 4);
+        this.enemies[this.targetDirection].rotation += 180;
+        this.enemies[this.targetDirection].rotation %= 360;
+        for (var i=0; i<4; i++) {
+            if (i != 0)
+                egret.Tween.get(this.enemies[i]).to({ "alpha" : 1 }, 500);
+            else
+                egret.Tween.get(this.enemies[i]).to({ "alpha" : 1 }, 500).call(this.startGame, this);
         }
     }
 
@@ -272,10 +370,69 @@ class MainGame extends egret.DisplayObjectContainer {
     }
 
     /**
-     * 执行下一局
-     * Start net round
+     * Game Over
      */
-    private toNextRound():void {
+    private gameOver():void {
+        this.touchSign.alpha = 1;
+        this.touchSign.touchEnabled = true;
+        this.touchSign.addEventListener(egret.TouchEvent.TOUCH_END, this.onReplayTouched, this);
+    }
+
+    private onReplayTouched(e:egret.TouchEvent):void {
+        for (var i=0; i<4; i++) {
+            if (i != 3)
+                egret.Tween.get(this.enemies[i]).to({ "alpha" : 0 }, 500);
+            else
+                egret.Tween.get(this.enemies[i]).to({ "alpha" : 0 }, 500).call(()=>{
+                    this.touchSign.removeEventListener(egret.TouchEvent.TOUCH_END, this.onReplayTouched, this);
+                    this.touchSign.touchEnabled = false;
+                    this.touchSign.alpha = 0;
+
+                    this.setUpGame();
+                });
+        }
+    }
+
+    /**
+     * 重置敌人
+     * Rest enemies
+     */
+    private setupEnemies():void {
+        for (var i=0; i<4; i++) {
+            var enemy:egret.Bitmap = this.enemies[i];
+            enemy.texture = this.sheet.getTexture("enemy");
+            enemy.rotation = i * 90;
+            var p = this.getEnenmyResetPosition(i);
+            enemy.x = p.x;  enemy.y = p.y;
+        }
+    }
+
+    /**
+     * 取得敌人位置的初始值
+     * Get the original location of the enemy
+     * @param {number} order    敌人的顺序 (order of the enemy)
+     * @returns {Point}
+     */
+    private getEnenmyResetPosition(order:number):Point {
+        var p:Point = new Point(0, 0);
+        var enemySize = 50;
+
+        switch (order) {
+            case 0:
+                p.x = this.centerPoint.x;       p.y = this.boardY + enemySize;
+                break;
+            case 1:
+                p.x = this.stageW - enemySize;  p.y = this.centerPoint.y;
+                break;
+            case 2:
+                p.x = this.centerPoint.x;       p.y = this.boardY + this.stageW - enemySize;
+                break;
+            case 3:
+                p.x = enemySize;                p.y = this.centerPoint.y;
+                break;
+        }
+
+        return p;
     }
 
     /**

@@ -15,12 +15,22 @@ var MainGame = (function (_super) {
     function MainGame(w, h) {
         _super.call(this);
         this.sheet = RES.getRes("gameSheet");
+        /**
+        * 是否可以交互
+        * Is ready to make interaction?
+        * @type {boolean}
+        */
         this.readyToEngage = false;
-        this.isInTutorial = true;
         this.drawScale = 50;
         // 游戏用数据
         // Variables for use in the game
+        /**
+        * 玩家旋转步数，在 1 - 2 之间切换
+        * Player rotation steps, switch between 1 and 2 steps
+        * @type {number}
+        */
         this.rotateSteps = 1;
+        this.targetDirection = -1;
         // 三角形检测使用函数
         // For triangle test
         this.sign = function (n) {
@@ -41,10 +51,12 @@ var MainGame = (function (_super) {
     * Initialize
     */
     MainGame.prototype.onAddToStage = function () {
+        var i;
+
         // 设置触摸层
         // Set up touch areas
         this.touchAreas = [];
-        for (var i = 0; i < 4; i++) {
+        for (i = 0; i < 4; i++) {
             var touchArea = new egret.Bitmap();
             touchArea.texture = this.sheet.getTexture("touchArea");
             touchArea.anchorX = 0.5;
@@ -76,6 +88,21 @@ var MainGame = (function (_super) {
         this.timeGraph.y = this.boardY + this.stageW / 2;
         this.addChild(this.timeGraph);
 
+        // 设置敌人
+        // Set up enemies
+        this.enemies = [];
+        for (i = 0; i < 4; i++) {
+            var enemy = new egret.Bitmap();
+            enemy.texture = this.sheet.getTexture("enemy");
+            enemy.anchorX = enemy.anchorY = 0.5;
+            var p = this.getEnenmyResetPosition(i);
+            enemy.x = p.x;
+            enemy.y = p.y;
+            enemy.alpha = 0;
+            this.enemies.push(enemy);
+            this.addChild(this.enemies[i]);
+        }
+
         // 设置玩家
         // Set up player
         this.player = new egret.Bitmap();
@@ -84,6 +111,45 @@ var MainGame = (function (_super) {
         this.player.x = this.stageW / 2;
         this.player.y = this.boardY + this.stageW / 2;
         this.addChild(this.player);
+
+        // 设置重玩按钮
+        // Set up replay button
+        this.touchSign = new egret.Bitmap();
+        this.touchSign.texture = this.sheet.getTexture("touchStart");
+        this.touchSign.anchorX = this.touchSign.anchorY = 0.5;
+        this.touchSign.alpha = 0;
+        this.touchSign.x = this.centerPoint.x;
+        this.touchSign.y = this.stageH - 150;
+        this.addChild(this.touchSign);
+
+        // 计算绘制需要的步长
+        // Calculate draw step
+        this.drawScaleStep = Math.ceil((this.stageW - this.drawScale) / 100);
+
+        // 创建一个计时器对象
+        // Create a Timer object
+        this.timer = new egret.Timer(20);
+
+        // 注册事件侦听器
+        // Register Timer event listener
+        this.timer.addEventListener(egret.TimerEvent.TIMER, this.timerFunc, this);
+
+        // 初始化触摸监听
+        // Initialize touch listener
+        this.touchEnabled = true;
+        this.addEventListener(egret.TouchEvent.TOUCH_END, this.onAreaTouched, this);
+
+        this.setUpGame();
+    };
+
+    /**
+    * 设置游戏
+    * Set up game
+    */
+    MainGame.prototype.setUpGame = function () {
+        var _this = this;
+        this.isInTutorial = true;
+        this.setupEnemies();
 
         // 设置演示方块
         // Set up demo block
@@ -107,28 +173,16 @@ var MainGame = (function (_super) {
 
         egret.Tween.get(this.demoBlock).to({ "alpha": 1, "y": this.boardY + 50 }, 500);
 
-        // 计算绘制需要的步长
-        // Calculate draw step
-        this.drawScaleStep = Math.ceil((this.stageW - this.drawScale) / 100);
-
-        // 创建一个计时器对象
-        // Create a Timer object
-        this.timer = new egret.Timer(20);
-
-        // 注册事件侦听器
-        // Register Timer event listener
-        this.timer.addEventListener(egret.TimerEvent.TIMER, this.timerFunc, this);
-
-        // 初始化触摸监听
-        // Initialize touch listener
-        this.touchEnabled = true;
-        this.addEventListener(egret.TouchEvent.TOUCH_END, this.onAreaTouched, this);
-
         for (var j = 0; j < 4; j++) {
             egret.Tween.get(this.touchAreas[j]).wait(j * 200).to({ "alpha": 1 }, 300).to({ "alpha": 0 }, 200);
         }
 
-        egret.Tween.get(this.instruction).to({ "alpha": 1 }, 800).wait(600).to({ "alpha": 0 }, 1000).call(this.startGame, this);
+        // 隐掉说明，开始游戏
+        // Hide the instruction and start the game
+        egret.Tween.get(this.instruction).to({ "alpha": 1 }, 800).wait(600).to({ "alpha": 0 }, 1000).call(function () {
+            _this.removeChild(_this.instruction);
+            _this.startGame();
+        });
     };
 
     /**
@@ -224,11 +278,142 @@ var MainGame = (function (_super) {
         shp.graphics.lineTo(endPoint.x, endPoint.y);
         this.addChild(shp);
 
-        setTimeout(function () {
-            _this.removeChild(shp);
-            _this.readyToEngage = true;
-            _this.timer.start();
-        }, 1000);
+        // 检查是否击中
+        // Check if we hit the target
+        if (this.isInTutorial) {
+            if (this.player.rotation == 0) {
+                this.demoBlock.texture = this.sheet.getTexture("demoBlockDestroyed");
+                egret.Tween.get(this.demoBlock).to({ "alpha": 0 }, 300).call(this.endTutorial, this);
+                setTimeout(function () {
+                    _this.removeChild(shp);
+                }, 1000);
+            } else {
+                setTimeout(function () {
+                    _this.removeChild(shp);
+                    _this.readyToEngage = true;
+                    _this.timer.start();
+                }, 1000);
+            }
+        } else {
+            setTimeout(function () {
+                _this.removeChild(shp);
+            }, 1000);
+            var direction = (this.player.rotation % 360) / 90;
+            if (direction == this.targetDirection) {
+                this.enemies[direction].texture = this.sheet.getTexture("enemyDestroyed");
+                for (var i = 0; i < 4; i++) {
+                    if (i != 0)
+                        egret.Tween.get(this.enemies[i]).to({ "alpha": 0 }, 500);
+                    else
+                        egret.Tween.get(this.enemies[i]).to({ "alpha": 0 }, 500).call(function () {
+                            _this.setupEnemies();
+                            _this.toNextRound();
+                        });
+                }
+            } else {
+                // GAME OVER
+                this.gameOver();
+            }
+        }
+    };
+
+    /**
+    * 执行下一局
+    * Start net round
+    */
+    MainGame.prototype.toNextRound = function () {
+        // 处理敌人显示
+        this.targetDirection = Math.floor(Math.random() * 4);
+        this.enemies[this.targetDirection].rotation += 180;
+        this.enemies[this.targetDirection].rotation %= 360;
+        for (var i = 0; i < 4; i++) {
+            if (i != 0)
+                egret.Tween.get(this.enemies[i]).to({ "alpha": 1 }, 500);
+            else
+                egret.Tween.get(this.enemies[i]).to({ "alpha": 1 }, 500).call(this.startGame, this);
+        }
+    };
+
+    /**
+    * 结束教学
+    * End the tutorial
+    */
+    MainGame.prototype.endTutorial = function () {
+        this.removeChild(this.demoBlock);
+        this.isInTutorial = false;
+        this.toNextRound();
+    };
+
+    /**
+    * Game Over
+    */
+    MainGame.prototype.gameOver = function () {
+        this.touchSign.alpha = 1;
+        this.touchSign.touchEnabled = true;
+        this.touchSign.addEventListener(egret.TouchEvent.TOUCH_END, this.onReplayTouched, this);
+    };
+
+    MainGame.prototype.onReplayTouched = function (e) {
+        var _this = this;
+        for (var i = 0; i < 4; i++) {
+            if (i != 3)
+                egret.Tween.get(this.enemies[i]).to({ "alpha": 0 }, 500);
+            else
+                egret.Tween.get(this.enemies[i]).to({ "alpha": 0 }, 500).call(function () {
+                    _this.touchSign.removeEventListener(egret.TouchEvent.TOUCH_END, _this.onReplayTouched, _this);
+                    _this.touchSign.touchEnabled = false;
+                    _this.touchSign.alpha = 0;
+
+                    _this.setUpGame();
+                });
+        }
+    };
+
+    /**
+    * 重置敌人
+    * Rest enemies
+    */
+    MainGame.prototype.setupEnemies = function () {
+        for (var i = 0; i < 4; i++) {
+            var enemy = this.enemies[i];
+            enemy.texture = this.sheet.getTexture("enemy");
+            enemy.rotation = i * 90;
+            var p = this.getEnenmyResetPosition(i);
+            enemy.x = p.x;
+            enemy.y = p.y;
+        }
+    };
+
+    /**
+    * 取得敌人位置的初始值
+    * Get the original location of the enemy
+    * @param {number} order    敌人的顺序 (order of the enemy)
+    * @returns {Point}
+    */
+    MainGame.prototype.getEnenmyResetPosition = function (order) {
+        var p = new Point(0, 0);
+        var enemySize = 50;
+
+        switch (order) {
+            case 0:
+                p.x = this.centerPoint.x;
+                p.y = this.boardY + enemySize;
+                break;
+            case 1:
+                p.x = this.stageW - enemySize;
+                p.y = this.centerPoint.y;
+                break;
+            case 2:
+                p.x = this.centerPoint.x;
+                p.y = this.boardY + this.stageW - enemySize;
+                break;
+            case 3:
+                p.x = enemySize;
+                p.y = this.centerPoint.y;
+                break;
+        }
+
+        return p;
     };
 
     /**
