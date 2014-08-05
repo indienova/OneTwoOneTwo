@@ -157,7 +157,7 @@ class MainGame extends egret.DisplayObjectContainer {
 
         // 计算绘制需要的步长
         // Calculate draw step
-        this.drawScaleStep = Math.ceil((this.stageW - this.drawScale) / 60);
+        this.drawScaleStep = Math.ceil((this.stageW - this.drawScale) / 80);
 
         // 创建一个计时器对象
         // Create a Timer object
@@ -399,17 +399,14 @@ class MainGame extends egret.DisplayObjectContainer {
     }
 
     private onReplayTouched(e:egret.TouchEvent):void {
+        this.touchSign.removeEventListener(egret.TouchEvent.TOUCH_END, this.onReplayTouched, this);
+        this.touchSign.touchEnabled = false;
+        this.touchSign.alpha = 0;
         for (var i=0; i<4; i++) {
             if (i != 3)
                 egret.Tween.get(this.enemies[i]).to({ "alpha" : 0 }, 500);
             else
-                egret.Tween.get(this.enemies[i]).to({ "alpha" : 0 }, 500).call(()=>{
-                    this.touchSign.removeEventListener(egret.TouchEvent.TOUCH_END, this.onReplayTouched, this);
-                    this.touchSign.touchEnabled = false;
-                    this.touchSign.alpha = 0;
-
-                    this.setUpGame();
-                });
+                egret.Tween.get(this.enemies[i]).to({ "alpha" : 0 }, 500).call(this.setUpGame, this);
         }
     }
 

@@ -133,7 +133,7 @@ var MainGame = (function (_super) {
 
         // 计算绘制需要的步长
         // Calculate draw step
-        this.drawScaleStep = Math.ceil((this.stageW - this.drawScale) / 60);
+        this.drawScaleStep = Math.ceil((this.stageW - this.drawScale) / 80);
 
         // 创建一个计时器对象
         // Create a Timer object
@@ -373,18 +373,14 @@ var MainGame = (function (_super) {
     };
 
     MainGame.prototype.onReplayTouched = function (e) {
-        var _this = this;
+        this.touchSign.removeEventListener(egret.TouchEvent.TOUCH_END, this.onReplayTouched, this);
+        this.touchSign.touchEnabled = false;
+        this.touchSign.alpha = 0;
         for (var i = 0; i < 4; i++) {
             if (i != 3)
                 egret.Tween.get(this.enemies[i]).to({ "alpha": 0 }, 500);
             else
-                egret.Tween.get(this.enemies[i]).to({ "alpha": 0 }, 500).call(function () {
-                    _this.touchSign.removeEventListener(egret.TouchEvent.TOUCH_END, _this.onReplayTouched, _this);
-                    _this.touchSign.touchEnabled = false;
-                    _this.touchSign.alpha = 0;
-
-                    _this.setUpGame();
-                });
+                egret.Tween.get(this.enemies[i]).to({ "alpha": 0 }, 500).call(this.setUpGame, this);
         }
     };
 
