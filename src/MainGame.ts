@@ -242,11 +242,40 @@ class MainGame extends egret.DisplayObjectContainer {
         shp.graphics.lineTo(endPoint.x, endPoint.y);
         this.addChild(shp);
 
-        setTimeout(()=>{
-            this.removeChild(shp);
-            this.readyToEngage = true;
-            this.timer.start();
-        }, 1000);
+        // 检查是否击中
+        // Check if we hit the target
+        var passed:boolean = false;
+        if (this.isInTutorial) {
+            if (this.player.rotation == 0) {
+                this.demoBlock.texture = this.sheet.getTexture("demoBlockDestroyed");
+                egret.Tween.get(this.demoBlock).to({ "alpha" : 0 }, 300).call(this.endTutorial, this);
+                passed = true;
+                setTimeout(()=>{    this.removeChild(shp);  }, 1000);
+            } else {
+                setTimeout(()=>{
+                    this.removeChild(shp);
+                    this.readyToEngage = true;
+                    this.timer.start();
+                }, 1000);
+            }
+        }
+    }
+
+    /**
+     * 结束教学
+     * End the tutorial
+     */
+    private endTutorial():void {
+        this.removeChild(this.demoBlock);
+        this.isInTutorial = false;
+        this.toNextRound();
+    }
+
+    /**
+     * 执行下一局
+     * Start net round
+     */
+    private toNextRound():void {
     }
 
     /**
