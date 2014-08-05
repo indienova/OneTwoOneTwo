@@ -16,6 +16,7 @@ class MainGame extends egret.DisplayObjectContainer {
     private demoBlock:egret.Bitmap;
     private instruction:egret.Bitmap;
     private touchSign:egret.Bitmap;
+    private labelScore:egret.TextField;
     private touchAreas:Array<egret.Bitmap>;
     private enemies:Array<egret.Bitmap>;
     private points:Array<any>;
@@ -41,6 +42,7 @@ class MainGame extends egret.DisplayObjectContainer {
     private timeGraph:egret.Shape;
     private drawScale:number = 50;
     private drawScaleStep:number;
+    private score:number = 0;
 
     // 游戏用数据
     // Variables for use in the game
@@ -145,9 +147,17 @@ class MainGame extends egret.DisplayObjectContainer {
         this.touchSign.y = this.stageH - 150;
         this.addChild(this.touchSign);
 
+        // 设置得分数字
+        // Set up score label
+        this.labelScore = new egret.TextField();
+        this.labelScore.size = 30;
+        this.labelScore.x = 10;
+        this.labelScore.y = this.boardY - 50;
+        this.addChild(this.labelScore);
+
         // 计算绘制需要的步长
         // Calculate draw step
-        this.drawScaleStep = Math.ceil((this.stageW - this.drawScale) / 100);
+        this.drawScaleStep = Math.ceil((this.stageW - this.drawScale) / 60);
 
         // 创建一个计时器对象
         // Create a Timer object
@@ -170,6 +180,8 @@ class MainGame extends egret.DisplayObjectContainer {
      */
     private setUpGame():void {
         this.isInTutorial = true;
+        this.score = 0;
+        this.updateScore();
         this.setupEnemies();
 
         // 设置演示方块
@@ -213,8 +225,8 @@ class MainGame extends egret.DisplayObjectContainer {
      * Start the game
      */
     private startGame():void {
-        this.timer.start();
         this.readyToEngage = true;
+        this.timer.start();
     }
 
     /**
@@ -308,6 +320,8 @@ class MainGame extends egret.DisplayObjectContainer {
             if (this.player.rotation == 0) {
                 this.demoBlock.texture = this.sheet.getTexture("demoBlockDestroyed");
                 egret.Tween.get(this.demoBlock).to({ "alpha" : 0 }, 300).call(this.endTutorial, this);
+                this.score++;
+                this.updateScore();
                 setTimeout(()=>{
                     this.removeChild(shp);
                 }, 1000);
@@ -325,6 +339,8 @@ class MainGame extends egret.DisplayObjectContainer {
             var direction = (this.player.rotation % 360) / 90;
             if (direction == this.targetDirection) {
                 this.enemies[direction].texture = this.sheet.getTexture("enemyDestroyed");
+                this.score++;
+                this.updateScore();
                 for (var i=0; i<4; i++) {
                     if (i != 0)
                         egret.Tween.get(this.enemies[i]).to({ "alpha" : 0 }, 500);
@@ -357,6 +373,10 @@ class MainGame extends egret.DisplayObjectContainer {
             else
                 egret.Tween.get(this.enemies[i]).to({ "alpha" : 1 }, 500).call(this.startGame, this);
         }
+    }
+
+    private updateScore():void {
+        this.labelScore.text = 'Score: ' + this.score;
     }
 
     /**
