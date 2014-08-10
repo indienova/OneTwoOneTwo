@@ -16,7 +16,8 @@ class MainGame extends egret.DisplayObjectContainer {
     private demoBlock:egret.Bitmap;
     private instruction:egret.Bitmap;
     private mainInstruction:egret.Bitmap;
-    private touchSign:egret.Bitmap;
+    private btnReplay:egret.Bitmap;
+    private btnWechat:egret.Bitmap;
     private bullet:egret.Bitmap;
     private labelScore:egret.TextField;
     private touchAreas:Array<egret.Bitmap>;
@@ -148,15 +149,25 @@ class MainGame extends egret.DisplayObjectContainer {
         this.bullet.y = this.centerPoint.y;
         this.addChild(this.bullet);
 
-        // 设置重玩按钮
-        // Set up replay button
-        this.touchSign = new egret.Bitmap();
-        this.touchSign.texture = this.sheet.getTexture("touchStart");
-        this.touchSign.anchorX = this.touchSign.anchorY = 0.5;
-        this.touchSign.alpha = 0;
-        this.touchSign.x = this.centerPoint.x;
-        this.touchSign.y = this.stageH - 120;
-        this.addChild(this.touchSign);
+        // 设置重玩和微信按钮
+        // Set up replay & WeChat button
+        this.btnReplay = new egret.Bitmap();
+        this.btnReplay.texture = this.sheet.getTexture("btnReplay");
+        this.btnReplay.anchorX = this.btnReplay.anchorY = 0.5;
+        this.btnReplay.alpha = 0;
+        this.btnReplay.x = this.centerPoint.x + 50;
+        this.btnReplay.y = this.stageH - 90;
+        this.btnReplay.name = 'replay';
+        this.addChild(this.btnReplay);
+
+        this.btnWechat = new egret.Bitmap();
+        this.btnWechat.texture = this.sheet.getTexture("btnWechat");
+        this.btnWechat.anchorX = this.btnWechat.anchorY = 0.5;
+        this.btnWechat.alpha = 0;
+        this.btnWechat.x = this.centerPoint.x - 50;
+        this.btnWechat.y = this.stageH - 90;
+        this.btnWechat.name = 'wechat';
+        this.addChild(this.btnWechat);
 
         // 设置主介绍
         // Set up main instruction
@@ -172,9 +183,9 @@ class MainGame extends egret.DisplayObjectContainer {
         // 设置得分数字
         // Set up score label
         this.labelScore = new egret.TextField();
-        this.labelScore.size = 30;
+        this.labelScore.size = 20;
         this.labelScore.x = 2;
-        this.labelScore.y = this.boardY - 50;
+        this.labelScore.y = this.boardY - 60;
         this.addChild(this.labelScore);
 
         // 计算绘制需要的步长
@@ -435,20 +446,61 @@ class MainGame extends egret.DisplayObjectContainer {
      * Game Over
      */
     private gameOver():void {
-        this.touchSign.alpha = 1;
-        this.touchSign.touchEnabled = true;
-        this.touchSign.addEventListener(egret.TouchEvent.TOUCH_END, this.onReplayTouched, this);
+        for (var i=0; i<4; i++)
+            egret.Tween.get(this.enemies[i]).to({ "alpha" : 0.3 }, 300);
+        this.btnReplay.alpha = 1;
+        this.btnReplay.touchEnabled = true;
+        this.btnReplay.addEventListener(egret.TouchEvent.TOUCH_END, this.onGameEndTouched, this);
+        this.btnWechat.alpha = 1;
+        this.btnWechat.touchEnabled = true;
+        this.btnWechat.addEventListener(egret.TouchEvent.TOUCH_END, this.onGameEndTouched, this);
+
+        document.title='成功的完成了 ' + this.score + ' 次射击！- 一下两下 OneTwoOneTwo';
     }
 
-    private onReplayTouched(e:egret.TouchEvent):void {
-        this.touchSign.removeEventListener(egret.TouchEvent.TOUCH_END, this.onReplayTouched, this);
-        this.touchSign.touchEnabled = false;
-        this.touchSign.alpha = 0;
-        for (var i=0; i<4; i++) {
-            if (i != 3)
-                egret.Tween.get(this.enemies[i]).to({ "alpha" : 0 }, 500);
-            else
-                egret.Tween.get(this.enemies[i]).to({ "alpha" : 0 }, 500).call(this.setUpGame, this);
+    private onGameEndTouched(e:egret.TouchEvent):void {
+        // replay
+        if (e.target.name == 'replay') {
+            this.btnReplay.removeEventListener(egret.TouchEvent.TOUCH_END, this.onGameEndTouched, this);
+            this.btnReplay.touchEnabled = false;
+            this.btnReplay.alpha = 0;
+            this.btnWechat.removeEventListener(egret.TouchEvent.TOUCH_END, this.onGameEndTouched, this);
+            this.btnWechat.touchEnabled = false;
+            this.btnWechat.alpha = 0;
+            for (var i=0; i<4; i++) {
+                if (i != 3)
+                    egret.Tween.get(this.enemies[i]).to({ "alpha" : 0 }, 300);
+                else
+                    egret.Tween.get(this.enemies[i]).to({ "alpha" : 0 }, 300).call(this.setUpGame, this);
+            }            
+        } else {    // wechat
+            var shp:egret.Shape = new egret.Shape();
+            shp.graphics.beginFill(0x000000, 0.5);
+            shp.graphics.drawRect(0, 0, this.stageW, this.stageH);
+            shp.graphics.endFill();
+            this.addChild(shp);
+            this.btnReplay.touchEnabled = false;
+            this.btnWechat.touchEnabled = false;
+
+            var labelWechat:egret.TextField = new egret.TextField();
+            labelWechat.size = 30;
+            labelWechat.textAlign = egret.HorizontalAlign.CENTER;
+            labelWechat.x = 0;
+            labelWechat.y = this.centerPoint.y;
+            labelWechat.width = this.stageW;
+            labelWechat.height = 60;
+            labelWechat.lineSpacing = 5;
+            labelWechat.strokeColor = 0x005500;
+            labelWechat.stroke = 1;
+            labelWechat.text = '请点击右上角\n点击“分享到朋友圈”\n和您的好友一起比试下吧';
+            this.addChild(labelWechat);
+
+            setTimeout(()=>{
+                this.removeChild(shp);
+                this.removeChild(labelWechat);
+                this.btnReplay.touchEnabled = true;
+                this.btnWechat.touchEnabled = true;
+            }, 4000);
         }
     }
 
